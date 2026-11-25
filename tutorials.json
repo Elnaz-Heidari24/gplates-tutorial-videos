@@ -1,0 +1,19 @@
+[
+ {
+  "id": "3.2-rotating-rasters",
+  "number": "3.2",
+  "title": {
+   "en": "3.2: Rotating Rasters and Age-Based Masking of Raster Data",
+   "fa": "3.2: چرخاندن رسترها و ماسک‌گذاری داده‌های رستری بر اساس سن",
+   "ru": "3.2: Вращение растров и маскирование растровых данных по возрасту",
+   "zh": "3.2：旋转栅格与基于年龄的栅格数据掩膜"
+  },
+  "languages": [
+   "en",
+   "fa",
+   "ru",
+   "zh"
+  ],
+  "duration": 218.2
+ }
+]

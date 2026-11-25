@@ -1,0 +1,55 @@
+# 3.2: Rotating Rasters and Age-Based Masking of Raster Data
+
+## 1
+In this tutorial, we will rotate raster data back through time in GPlates, and use an age grid to make it smoother.
+
+## 2
+A raster is an image made of pixels, like a JPEG or a netCDF file. It is different from vector data, which is points, lines and polygons.
+
+## 3
+You can download the files for this exercise from the Tutorial 3.2 link. [PAUSE 1s]
+
+## 4
+Exercise 1: rotating and cutting a raster. [PAUSE 1s]
+
+## 5
+Go to File, then Open Feature Collection, and open the rotation file and the static polygons file. [PAUSE 1s]
+
+## 6
+Now go to File, then Import, then Import Raster, and select the topography image. [PAUSE 2s]
+
+## 7
+In the Layers window, keep the raster at the bottom and the polygons on top. Drag the layers if needed. [PAUSE 1s]
+
+## 8
+Expand the raster layer by clicking the small triangle on its left. [PAUSE 1s]
+
+## 9
+In Inputs, under Reconstructed Polygons, click Add new connection, and select the static polygons. Give GPlates a moment to process. [PAUSE 2s]
+
+## 10
+Now move the time slider back, for example to 50 Ma. The raster is cut into plates and rotated to its past position. [PAUSE 2s]
+
+## 11
+To see only the raster, hide the polygons by clicking their eye icon. [PAUSE 1s]
+
+## 12
+Notice the big grey gaps along the mid-ocean ridges. Whole polygons disappear at once, so the seafloor jumps instead of growing smoothly. [PAUSE 1s]
+
+## 13
+Exercise 2: age-based masking. We will fix those gaps with the seafloor age grid. [PAUSE 1s]
+
+## 14
+Import the age grid the same way. If GPlates asks whether to use the existing GPML file, click No. Then choose age as the raster band. [PAUSE 2s]
+
+## 15
+The static polygons should still be connected to the topography layer, under Reconstructed Polygons. Now, in the topography layer, under Inputs, find Age grid raster, click Add new connection, and select the age grid. Make sure you add it to the topography layer, not to the age grid layer. [PAUSE 2s]
+
+## 16
+As we move back in time, the seafloor progressively disappears based on its age, producing a smoother reconstruction. [PAUSE 2s]
+
+## 17
+This works because every pixel in the age grid has its own age, instead of one age for a whole polygon. For example, at 50 Ma, seafloor younger than 50 million years is hidden, because it had not formed yet. [PAUSE 1s]
+
+## 18
+That's it. You rotated a raster through time, and used an age grid to mask it smoothly. Thanks for watching.

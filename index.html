@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPlates Tutorials</title>
+<!-- No external files (fonts, CDNs): everything loads from this site, so it also works where Google etc. are blocked. -->
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#1b1f24; --muted:#5d6670; --line:#dde1e6; --accent:#1f6feb; --accent-text:#fff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0f1216; --card:#181c22; --text:#e6e9ed; --muted:#9aa4ae; --line:#2a3038; --accent:#4c8dff; --accent-text:#fff; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:16px/1.5 system-ui,-apple-system,"Segoe UI",Tahoma,"Noto Sans","Noto Sans Arabic","Microsoft YaHei","PingFang SC",sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:20px 16px 40px; }
+  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  h1 { font-size:1.35rem; margin:0; }
+  a { color:var(--accent); }
+  .langs { display:flex; flex-wrap:wrap; gap:6px; }
+  .langs button { font:inherit; padding:6px 14px; border-radius:999px; border:1px solid var(--line);
+                  background:var(--card); color:var(--text); cursor:pointer; }
+  .langs button[aria-pressed="true"] { background:var(--accent); border-color:var(--accent); color:var(--accent-text); }
+  .player { background:#000; border-radius:10px; overflow:hidden; }
+  video { display:block; width:100%; max-height:75vh; background:#000; }
+  .bar { display:flex; flex-wrap:wrap; gap:16px; align-items:center; justify-content:space-between; margin-top:10px; color:var(--muted); font-size:.92rem; }
+  .bar label { display:flex; gap:6px; align-items:center; cursor:pointer; }
+  ul.list { list-style:none; padding:0; margin:0; display:grid; gap:10px; }
+  ul.list a { display:flex; justify-content:space-between; gap:12px; padding:14px 16px; background:var(--card);
+              border:1px solid var(--line); border-radius:10px; text-decoration:none; color:var(--text); }
+  ul.list span { color:var(--muted); white-space:nowrap; }
+  h2.chapter { font-size:1.05rem; margin:22px 0 10px; color:var(--muted); }
+  h2.chapter:first-of-type { margin-top:4px; }
+  .search { width:100%; font:inherit; padding:9px 12px; margin:0 0 6px; border-radius:10px;
+            border:1px solid var(--line); background:var(--card); color:var(--text); }
+  .msg { padding:16px; background:var(--card); border:1px solid var(--line); border-radius:10px; }
+  [dir="rtl"] { text-align:right; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 id="title">GPlates Tutorials</h1>
+    <div class="langs" id="langs" role="group" aria-label="Language"></div>
+  </header>
+  <div id="content"></div>
+</main>
+
+<script>
+const LANGS = {
+  en: { name: 'English', dir: 'ltr', all: 'All tutorials', subs: 'Subtitles', site: 'GPlates Tutorials', missing: 'Tutorial not found.',
+        chapter: n => `Chapter ${n}`, other: 'Other', search: 'Search tutorials', none: 'No tutorials found.' },
+  fa: { name: 'فارسی', dir: 'rtl', all: 'همه آموزش‌ها', subs: 'زیرنویس', site: 'آموزش‌های GPlates', missing: 'آموزش پیدا نشد.',
+        chapter: n => `فصل ${n}`, other: 'سایر', search: 'جستجو در آموزش‌ها', none: 'آموزشی پیدا نشد.' },
+  ru: { name: 'Русский', dir: 'ltr', all: 'Все уроки', subs: 'Субтитры', site: 'Уроки GPlates', missing: 'Урок не найден.',
+        chapter: n => `Глава ${n}`, other: 'Другое', search: 'Поиск уроков', none: 'Уроки не найдены.' },
+  zh: { name: '中文', dir: 'ltr', all: '全部教程', subs: '字幕', site: 'GPlates 教程', missing: '未找到教程。',
+        chapter: n => `第 ${n} 章`, other: '其他', search: '搜索教程', none: '未找到教程。' },
+};
+const params = new URLSearchParams(location.search);
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+                set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const $ = id => document.getElementById(id);
+
+function pickLang(available) {
+  const wanted = [params.get('lang'), store.get('lang'), ...(navigator.languages || []).map(l => l.slice(0, 2)), 'en'];
+  return wanted.find(l => l && available.includes(l)) || available[0];
+}
+// "3.2" -> [3, 2] for sorting; number comes from tutorials.json, or from the folder name
+function numberOf(t) { const m = (t.number || t.id).match(/^\d+(\.\d+)*/); return m ? m[0] : ''; }
+function numKey(t) { const n = numberOf(t); return n ? n.split('.').map(Number) : [Infinity]; }
+function byNumber(a, b) {
+  const x = numKey(a), y = numKey(b);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const d = (x[i] ?? -1) - (y[i] ?? -1);
+    if (d) return d;
+  }
+  return a.id.localeCompare(b.id);
+}
+function fmt(s) { return `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`; }
+
+let tutorials = [];
+let lang = 'en';
+let player = null; // set when a tutorial is open
+
+function renderLangButtons(available) {
+  $('langs').innerHTML = '';
+  for (const code of available) {
+    const b = document.createElement('button');
+    b.textContent = LANGS[code].name;
+    b.lang = code;
+    b.setAttribute('aria-pressed', code === lang);
+    b.onclick = () => setLang(code);
+    $('langs').appendChild(b);
+  }
+}
+
+function setLang(code) {
+  lang = code;
+  store.set('lang', code);
+  const u = new URL(location.href); u.searchParams.set('lang', code); history.replaceState(null, '', u);
+  document.querySelectorAll('#langs button').forEach(b => b.setAttribute('aria-pressed', b.lang === code));
+  document.documentElement.lang = code;
+  if (player) player.switchTo(code); else renderList();
+}
+
+let query = '';
+function renderList() {
+  $('title').textContent = LANGS[lang].site;
+  document.title = LANGS[lang].site;
+  $('content').dir = LANGS[lang].dir;
+  if (!tutorials.length) { $('content').innerHTML = '<p class="msg">No tutorials yet.</p>'; return; }
+  const search = document.createElement('input');
+  search.type = 'search'; search.className = 'search'; search.value = query;
+  search.placeholder = LANGS[lang].search; search.setAttribute('aria-label', LANGS[lang].search);
+  const list = document.createElement('div');
+  search.oninput = () => { query = search.value; fillList(list); };
+  $('content').replaceChildren(search, list);
+  fillList(list);
+}
+
+function fillList(box) {
+  const q = query.trim().toLowerCase();
+  const shown = tutorials.filter(t => !q || [t.id, ...Object.values(t.title || {})].join(' ').toLowerCase().includes(q));
+  if (!shown.length) { const p = document.createElement('p'); p.className = 'msg'; p.textContent = LANGS[lang].none; box.replaceChildren(p); return; }
+  const groups = new Map();                       // chapter -> tutorials, in number order
+  for (const t of shown) {
+    const n = numberOf(t); const ch = n ? n.split('.')[0] : '';
+    if (!groups.has(ch)) groups.set(ch, []);
+    groups.get(ch).push(t);
+  }
+  const parts = [];
+  for (const [ch, items] of groups) {
+    const h = document.createElement('h2'); h.className = 'chapter';
+    h.textContent = ch ? LANGS[lang].chapter(ch) : LANGS[lang].other;
+    const ul = document.createElement('ul'); ul.className = 'list';
+    for (const t of items) {
+      const li = document.createElement('li'); const a = document.createElement('a');
+      a.href = `?t=${encodeURIComponent(t.id)}&lang=${lang}`;
+      const name = document.createElement('b'); name.textContent = t.title[lang] || t.title.en || t.id;
+      const len = document.createElement('span'); len.textContent = fmt(t.duration || 0);
+      a.append(name, len); li.appendChild(a); ul.appendChild(li);
+    }
+    parts.push(h, ul);
+  }
+  box.replaceChildren(...parts);
+}
+
+function openTutorial(t) {
+  const base = `tutorials/${encodeURIComponent(t.id)}/`;
+  $('content').innerHTML = `
+    <div class="player"><video id="video" controls playsinline preload="metadata"></video></div>
+    <div class="bar">
+      <a id="back" href="./"></a>
+      <label><input type="checkbox" id="cc"> <span id="ccLabel"></span></label>
+    </div>`;
+  const video = $('video');
+  video.src = base + 'video.mp4';
+  for (const code of t.languages) {           // one subtitle track per language
+    const tr = document.createElement('track');
+    tr.kind = 'subtitles'; tr.srclang = code; tr.label = LANGS[code].name; tr.src = base + code + '.vtt';
+    video.appendChild(tr);
+  }
+  const audio = new Audio(); audio.preload = 'auto';
+  const cc = $('cc');
+  cc.checked = store.get('cc') === '1';
+
+  // ---- keep the narration audio locked to the video ----
+  const resync = (tight) => {
+    if (Math.abs(audio.currentTime - video.currentTime) > (tight ? 0.05 : 0.3)) audio.currentTime = video.currentTime;
+  };
+  const playAudio = () => { if (!video.paused) { resync(true); audio.play().catch(() => {}); } };
+  video.addEventListener('play', playAudio);
+  video.addEventListener('playing', playAudio);
+  video.addEventListener('pause', () => audio.pause());
+  video.addEventListener('waiting', () => audio.pause());   // video buffering -> wait together
+  video.addEventListener('ended', () => audio.pause());
+  video.addEventListener('seeking', () => resync(true));
+  video.addEventListener('seeked', () => { resync(true); playAudio(); });
+  video.addEventListener('ratechange', () => { audio.playbackRate = video.playbackRate; });
+  // the video file has no sound, so its volume / mute buttons control the narration instead
+  video.addEventListener('volumechange', () => { audio.volume = video.volume; audio.muted = video.muted; });
+  audio.addEventListener('waiting', () => { if (!video.paused) { video.pause(); audio.addEventListener('canplay', () => video.play(), { once: true }); } });
+  setInterval(() => { if (!video.paused) resync(false); }, 500);
+
+  function showSubs() {
+    for (const tr of video.textTracks) tr.mode = (cc.checked && tr.language === lang) ? 'showing' : 'disabled';
+  }
+  cc.onchange = () => { store.set('cc', cc.checked ? '1' : '0'); showSubs(); };
+
+  player = {
+    switchTo(code) {
+      $('title').textContent = t.title[code] || t.title.en || t.id;
+      document.title = $('title').textContent;
+      $('back').textContent = (LANGS[code].dir === 'rtl' ? '→ ' : '← ') + LANGS[code].all;
+      $('back').href = `./?lang=${code}`;
+      $('ccLabel').textContent = LANGS[code].subs;
+      $('content').querySelector('.bar').dir = LANGS[code].dir;
+      audio.pause();
+      audio.src = base + code + '.mp3';
+      audio.playbackRate = video.playbackRate;
+      audio.addEventListener('loadedmetadata', () => { audio.currentTime = video.currentTime; playAudio(); }, { once: true });
+      audio.load();
+      showSubs();
+    },
+  };
+  video.textTracks.addEventListener?.('addtrack', showSubs);
+  player.switchTo(lang);
+  showSubs();
+}
+
+async function start() {
+  try {
+    const r = await fetch('tutorials.json', { cache: 'no-cache' });
+    tutorials = (await r.json()).sort(byNumber);
+  } catch { tutorials = []; }
+  const id = params.get('t');
+  // ?t=3.2 also works for the folder 3.2-rotating-rasters
+  const t = id && (tutorials.find(x => x.id === id) || tutorials.find(x => numberOf(x) === id));
+  const available = t ? t.languages : Object.keys(LANGS);
+  lang = pickLang(available);
+  document.documentElement.lang = lang;
+  renderLangButtons(available);
+  if (t) openTutorial(t);
+  else if (id) { $('content').innerHTML = `<p class="msg">${LANGS[lang].missing} <a href="./">${LANGS[lang].all}</a></p>`; }
+  else renderList();
+}
+start();
+</script>
+</body>
+</html>

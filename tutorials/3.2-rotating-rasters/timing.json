@@ -1,0 +1,128 @@
+[
+ {
+  "segment": 1,
+  "start": 0.0,
+  "end": 10.3,
+  "longest": "zh",
+  "text": "In this tutorial, we will rotate raster data back through time in GPlates, and use an age grid to make it smoother."
+ },
+ {
+  "segment": 2,
+  "start": 10.3,
+  "end": 23.7,
+  "longest": "fa",
+  "text": "A raster is an image made of pixels, like a JPEG or a netCDF file. It is different from vector data, which is points, lines and polygons."
+ },
+ {
+  "segment": 3,
+  "start": 23.7,
+  "end": 31.1,
+  "longest": "fa",
+  "text": "You can download the files for this exercise from the Tutorial 3.2 link."
+ },
+ {
+  "segment": 4,
+  "start": 31.1,
+  "end": 37.2,
+  "longest": "ru",
+  "text": "Exercise 1: rotating and cutting a raster."
+ },
+ {
+  "segment": 5,
+  "start": 37.2,
+  "end": 46.5,
+  "longest": "ru",
+  "text": "Go to File, then Open Feature Collection, and open the rotation file and the static polygons file."
+ },
+ {
+  "segment": 6,
+  "start": 46.5,
+  "end": 56.3,
+  "longest": "ru",
+  "text": "Now go to File, then Import, then Import Raster, and select the topography image."
+ },
+ {
+  "segment": 7,
+  "start": 56.3,
+  "end": 66.3,
+  "longest": "fa",
+  "text": "In the Layers window, keep the raster at the bottom and the polygons on top. Drag the layers if needed."
+ },
+ {
+  "segment": 8,
+  "start": 66.3,
+  "end": 73.3,
+  "longest": "fa",
+  "text": "Expand the raster layer by clicking the small triangle on its left."
+ },
+ {
+  "segment": 9,
+  "start": 73.3,
+  "end": 88.5,
+  "longest": "fa",
+  "text": "In Inputs, under Reconstructed Polygons, click Add new connection, and select the static polygons. Give GPlates a moment to process."
+ },
+ {
+  "segment": 10,
+  "start": 88.5,
+  "end": 102.3,
+  "longest": "ru",
+  "text": "Now move the time slider back, for example to 50 Ma. The raster is cut into plates and rotated to its past position."
+ },
+ {
+  "segment": 11,
+  "start": 102.3,
+  "end": 110.3,
+  "longest": "fa",
+  "text": "To see only the raster, hide the polygons by clicking their eye icon."
+ },
+ {
+  "segment": 12,
+  "start": 110.3,
+  "end": 124.9,
+  "longest": "fa",
+  "text": "Notice the big grey gaps along the mid-ocean ridges. Whole polygons disappear at once, so the seafloor jumps instead of growing smoothly."
+ },
+ {
+  "segment": 13,
+  "start": 124.9,
+  "end": 135.1,
+  "longest": "ru",
+  "text": "Exercise 2: age-based masking. We will fix those gaps with the seafloor age grid."
+ },
+ {
+  "segment": 14,
+  "start": 135.1,
+  "end": 151.6,
+  "longest": "fa",
+  "text": "Import the age grid the same way. If GPlates asks whether to use the existing GPML file, click No. Then choose age as the raster band."
+ },
+ {
+  "segment": 15,
+  "start": 151.6,
+  "end": 176.6,
+  "longest": "fa",
+  "text": "The static polygons should still be connected to the topography layer, under Reconstructed Polygons. Now, in the topography layer, under Inputs, find Age grid raster, click Add new connection, and select the age grid. Make sure you add it to the topography layer, not to the age grid layer."
+ },
+ {
+  "segment": 16,
+  "start": 176.6,
+  "end": 188.4,
+  "longest": "ru",
+  "text": "As we move back in time, the seafloor progressively disappears based on its age, producing a smoother reconstruction."
+ },
+ {
+  "segment": 17,
+  "start": 188.4,
+  "end": 206.7,
+  "longest": "fa",
+  "text": "This works because every pixel in the age grid has its own age, instead of one age for a whole polygon. For example, at 50 Ma, seafloor younger than 50 million years is hidden, because it had not formed yet."
+ },
+ {
+  "segment": 18,
+  "start": 206.7,
+  "end": 218.2,
+  "longest": "fa",
+  "text": "That's it. You rotated a raster through time, and used an age grid to mask it smoothly. Thanks for watching."
+ }
+]
